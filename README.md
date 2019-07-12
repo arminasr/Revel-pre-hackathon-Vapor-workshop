@@ -5,6 +5,7 @@ This repo contains Swift Vapor preparation guidelines and content for revel hack
   - [Xcode 9 or later](https://apps.apple.com/us/app/xcode/id497799835?mt=12)
   - Swift 4.1 (We'll use Vapor 3. Vapor 4 is the latest version, it requires Swift 5.1)
   - [Postman](https://www.getpostman.com/downloads/)
+  - Docker
 
 ## Installing Vapor Toolbox
 - Vapor toolbox is a tool for creating, building, running Vapor projects.
@@ -64,7 +65,7 @@ router.post(InfoData.self, at: "info") { req, data -> InfoResponse in
     return InfoResponse(response: data)
 }
 ```
-### Async requests - Futures and Promises
+## Async requests - Futures and Promises
 In Vapor a promise to deliver the result at some point of time is called **Future**.
 There are two main functions for dealing with unwrapping the result:
 
@@ -74,3 +75,10 @@ flatMap(to:) // use when promise closure returns a Future
 ```Swift
 map(to:) // use when promise closure returns a type other than Future
 ```
+
+## Configuring with Database
+
+**Choose from:**
+- SQLite
+- MySQL
+- PostgreSQL
