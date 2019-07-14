@@ -5,7 +5,7 @@ This repo contains Swift Vapor preparation guidelines and content for revel hack
   - [Xcode 9 or later](https://apps.apple.com/us/app/xcode/id497799835?mt=12)
   - Swift 4.1 (We'll use Vapor 3. Vapor 4 is the latest version, it requires Swift 5.1)
   - [Postman](https://www.getpostman.com/downloads/)
-  - Docker
+  - Docker installed
 
 ## Installing Vapor Toolbox
 - Vapor toolbox is a tool for creating, building, running Vapor projects.
@@ -17,9 +17,13 @@ This repo contains Swift Vapor preparation guidelines and content for revel hack
 eval "$(curl -sL check.vapor.sh)"
 ```
 ### Installing on macOS
-We are focusing on development on macOS environment, using XCode. Vapor 3 works on linux as well, installation process is slightly different tho.
 ```
 brew install vapor/tap/vapor
+```
+
+### Installing on Linux
+```
+eval "$(curl -sL https://apt.vapor.sh)"
 ```
 
 ## Building first app
@@ -56,16 +60,40 @@ router.get("hello", String.parameter) { req -> String in
 }
 
 //Accepting data
-router.post(InfoData.self, at: "info") { req, data -> String in
-    return "Hello, \(data.name) \(data.surname)!"
+router.post(RevelThread.self, at: "thread") { req, data -> String in
+    return "Thread with title: \(data.title) posted."
 }
 
 //Returning json
-router.post(InfoData.self, at: "info") { req, data -> InfoResponse in
-    return InfoResponse(response: data)
+router.post(RevelThread.self, at: "thread") { req, data -> RevelThread in
+    return data
 }
 ```
-## Async requests - Futures and Promises
+
+## Configuring Database
+
+**Choose from:**
+- SQLite
+- MySQL
+- **PostgreSQL**
+
+### Run the chosen DB in Docker
+```
+docker run --name postres -e POSTGRES_DB=vapor \-e POSTGRES_USER=vapor -e POSTGRES_PASSWORD=password \-p 5432:5432 -d postgres
+```
+
+Check status
+```
+docker ps
+```
+
+### Configure the app
+- Package.swift
+- ```vapor xcode -y```
+- Configure.swift
+- RevelThread.swift
+
+### Async requests - Futures and Promises
 In Vapor a promise to deliver the result at some point of time is called **Future**.
 There are two main functions for dealing with unwrapping the result:
 
@@ -76,9 +104,41 @@ flatMap(to:) // use when promise closure returns a Future
 map(to:) // use when promise closure returns a type other than Future
 ```
 
-## Configuring with Database
+### CRUD database operations examples
+```Swift
+    router.post("api", "threads") { req -> Future<RevelThread> in
+        return try req.content.decode(RevelThread.self)
+            .flatMap(to: RevelThread.self) { thread in
 
-**Choose from:**
-- SQLite
-- MySQL
-- PostgreSQL
+            return thread.save(on: req)
+        }
+    }
+
+    // get all threads
+    router.get("api", "threads") { req -> Future<[RevelThread]> in
+        return RevelThread.query(on: req).all()
+    }
+
+    // get single with parameter
+    router.get("api", "threads", RevelThread.parameter) { req -> Future<RevelThread> in
+        return try req.parameters.next(RevelThread.self)
+    }
+
+    // update
+    router.put("api", "threads", RevelThread.parameter) { req -> Future<RevelThread> in
+        return try flatMap(to: RevelThread.self,
+                           req.parameters.next(RevelThread.self),
+                           req.content.decode(RevelThread.self)) { acronym, updatedAcronym in
+                            acronym.title = updatedAcronym.title
+                            return acronym.save(on: req)
+        }
+    }
+
+    // delete
+    router.delete("api", "threads", RevelThread.parameter) { req -> Future<HTTPStatus> in
+        return try req.parameters
+            .next(RevelThread.self)
+            .delete(on: req)
+            .transform(to: HTTPStatus.noContent)
+    }
+```
