@@ -1,5 +1,5 @@
 # Revel-pre-hackathon-Vapor-workshop
-This repo contains Swift Vapor preparation guidelines and content for revel hackathon
+This repo contains Swift Vapor preparation guidelines and content for an upcoming Revel hackathon
 
 ## Prerequisites
   - [Xcode 9 or later](https://apps.apple.com/us/app/xcode/id497799835?mt=12)
